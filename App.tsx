@@ -1,13 +1,14 @@
 /* eslint-disable quotes */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable prettier/prettier */
-import React, {useCallback, useEffect, useState} from 'react';
-import {Provider as PaperProvider} from 'react-native-paper';
-import {NavigationContainer, useFocusEffect} from '@react-navigation/native';
-import {CombinedDefaultTheme} from './src/utils/theme';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Provider as PaperProvider } from 'react-native-paper';
+import { NavigationContainer, useFocusEffect } from '@react-navigation/native';
+import { CombinedDefaultTheme } from './src/utils/theme';
 import AppNavigation from './src/layouts/navigation/AppNavigation';
-import {LogLevel, OneSignal} from 'react-native-onesignal';
-import {LogBox} from 'react-native';
+import { LogLevel, OneSignal } from 'react-native-onesignal';
+import { LogBox } from 'react-native';
+import { Appearance } from 'react-native';
 import SplashScreen from 'react-native-splash-screen';
 // import SplashScreen from 'react-native-splash-screen';
 
@@ -16,7 +17,7 @@ export default function App() {
   useEffect(() => {
     setTimeout(() => {
       SplashScreen.hide();
-    }, );
+    },);
   })
 
   OneSignal.Debug.setLogLevel(LogLevel.Verbose);

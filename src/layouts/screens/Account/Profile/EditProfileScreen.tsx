@@ -455,7 +455,7 @@ const EditProfileScreen: React.FC<Props> = ({navigation, route}) => {
                 rules={{
                   required: true,
                   pattern: {
-                    value: /^\d{4}-\d{2}-\d{2}$/, // Regular expression pattern for "DD-MM-YYYY"
+                    value: /^\d{2}-\d{2}-\d{4}$/,
                     message:
                       'Please enter a valid date in the format YYYY-MM-DD',
                   },

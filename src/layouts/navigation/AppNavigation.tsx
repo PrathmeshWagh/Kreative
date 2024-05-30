@@ -42,6 +42,7 @@ import { View, ActivityIndicator } from 'react-native';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 import { getStorageData } from '../../utils/helper';
 import TimesheetNavigation from './TimesheetNavigation';
+import OdometerHistory from '../screens/Management/OdometerHistory';
 
 const Stack = createNativeStackNavigator();
 
@@ -165,6 +166,8 @@ const AppNavigation = () => {
 
       {/* TOPTABNAVIGATION */}
       <Stack.Screen name="MarkAttendance" component={MarkAttendance} />
+
+      <Stack.Screen name='OdometerHistory' component={OdometerHistory} />
     </Stack.Navigator>
       ) : (
     <View>

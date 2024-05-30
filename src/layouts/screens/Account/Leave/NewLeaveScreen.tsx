@@ -160,7 +160,7 @@ const NewLeaveScreen: React.FC<Props> = ({navigation}) => {
         });
         navigation.dispatch(
           CommonActions.navigate({
-            name: 'TabNavigation',
+            name: 'AllLeavesScreen',
           }),
         );
       } else {

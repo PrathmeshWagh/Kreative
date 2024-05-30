@@ -27,10 +27,11 @@ export const postMethod = async (url, body, token) => {
     let StoredData = await getStorageData();
     const setHeader = () => {
       if (StoredData !== null) {
+        // console.log('StoredData.token',StoredData.token);
         return `Bearer ${StoredData.token}`;
       }
     };
-    if (internet.isInternetReachable) {
+    if (internet.isConnected) {
       return await axios.post(baseURL + url, body, {
         headers: {
           Authorization: setHeader(),
@@ -39,25 +40,28 @@ export const postMethod = async (url, body, token) => {
       });
     } else {
       console.log('postMethod error reason iss internet =>', internet);
-      return internet.isInternetReachable;
+      return internet.isConnected;
     }
   } catch (e) {
     console.log('postMethod error reason isS =>', e);
     return e;
   }
 };
+
 export const getMethod = async (url, body) => {
-  console.log('...', url + body);
+  // console.log('...', url + body);
   try {
     let internet = await NetInfo.fetch();
     let StoredData = await getStorageData();
-    console.log(StoredData.token,'token');
+    // console.log(StoredData.token,'token');
     const setHeader = () => {
       if (StoredData.token !== null) {
         return `Bearer ${StoredData.token}`;
       }
     };
     if (internet.isInternetReachable) {
+      // console.log('getmethod');
+      // console.log('a',baseURL + url);
       return await axios.get(baseURL + url, {
         headers: {
           Authorization: setHeader(),
@@ -73,6 +77,7 @@ export const getMethod = async (url, body) => {
     return e;
   }
 };
+
 export const FormPostMethod = async (url, formData) => {
   console.log('FormPostMethodddd', formData.task_pictiure);
   try {

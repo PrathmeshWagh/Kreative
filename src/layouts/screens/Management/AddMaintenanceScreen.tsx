@@ -1,13 +1,10 @@
-/* eslint-disable prettier/prettier */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import React, {useState, useEffect, FC, useCallback} from 'react';
+import React, { useState, useEffect, FC, useCallback } from 'react';
 import {
   StyleSheet,
   Text,
   View,
   Image,
   Dimensions,
-  Button,
   ScrollView,
   TouchableOpacity,
   Platform,
@@ -17,30 +14,39 @@ import {
 import IonIcon from 'react-native-vector-icons/Ionicons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import {ImagePickerResponse, launchCamera, launchImageLibrary} from 'react-native-image-picker';
+import { ImagePickerResponse, launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import Modal from 'react-native-modal';
 import colors from '../../style/colors';
 import { CommonActions, useFocusEffect } from '@react-navigation/native';
-import { getMethod } from '../../../utils/helper';
+import { getMethod, postMethod } from '../../../utils/helper';
 import { Badge } from 'react-native-paper';
-const {width, height} = Dimensions.get('window');
+import Snackbar from 'react-native-snackbar';
+import axios from 'axios';
+const { width, height } = Dimensions.get('window');
+import TextInputMask from 'react-native-text-input-mask';
 
 interface Props {
   navigation: any;
 }
 
-const AddMaintenanceScreen: FC<Props> = ({navigation}) => {
-  // // PHOTO UPLOAD USESTATE----------------------------------------------------------------
+const AddMaintenanceScreen: FC<Props> = ({ navigation }) => {
+  const [billName, setBillName] = useState('');
+  const [billDate, setBillDate] = useState('');
+  const [billAmount, setBillAmount] = useState('');
+  const [billType, setBillType] = useState('');
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [imageUris, setImageUris] = useState<string[]>([]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [notificationCount, setNotificationCount] = useState(null);
-  const [userDetails, setUserDetails] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [vehicleDetail, setVehicleDetails] = useState([]);
+  const [isModalVisible, setModalVisible] = useState(false);
+
 
   useFocusEffect(
     useCallback(() => {
       fetchNotificationNumber();
+      getData()
     }, []),
   );
 
@@ -57,6 +63,94 @@ const AddMaintenanceScreen: FC<Props> = ({navigation}) => {
       setLoading(false);
     }
   };
+
+  const getData = async () => {
+    try {
+      setLoading(true)
+      // const response: any = await axios.get(`https://kreativebuilder.com/hrms/api/VMS/assign_vehicle_data`, {
+      //   headers: {
+      //     Authorization: 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoiMSIsInVzZXJuYW1lIjoic3VwZXJhZG1pbiIsImVtYWlsIjoic3VwZXJhZG1pbkBnbWFpbC5jb20ifQ.JDP5tig6VGI-fE_dHH4sWRINSIn0QznPHE4rfrtJbeo',
+      //     Accept: 'application/json'
+      //   },
+      // })
+      const response: any = await getMethod(`VMS/assign_vehicle_data`)
+      // console.log('erre',response);
+      
+      if (response.status === 200) {
+        // console.log('resp', response?.data.Data[0]);
+        setVehicleDetails(response?.data.Data[0])
+        setLoading(false)
+      } else {
+        setLoading(false)
+        console.log('error in all data api', response.data);
+
+      }
+    } catch (error) {
+      setLoading(false)
+      console.log('error in assign_vehicle api', error);
+
+    }
+  }
+
+  const SubmitData = async () => {
+    try {
+      setLoading(true);
+      const Data = {
+        id: '5',
+        ie_date: billDate,
+        ie_type: billType,
+        ie_description: billName,
+        ie_amount: billAmount
+      }
+      // console.log('Data', Data);
+      // const response: any = await axios.post(`https://kreative.braincave.work/hrms/api/VMS/maintenance_data`, Data, {
+      //   headers: {
+      //     Authorization: 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoiMSIsInVzZXJuYW1lIjoic3VwZXJhZG1pbiIsImVtYWlsIjoic3VwZXJhZG1pbkBnbWFpbC5jb20ifQ.JDP5tig6VGI-fE_dHH4sWRINSIn0QznPHE4rfrtJbeo',
+      //     Accept: 'application/json',
+      //   },
+      // })
+
+      const response: any = await postMethod(`VMS/maintenance_data`, Data)
+
+      if (response.status === 200) {
+        console.log('response', response.data);
+
+        Snackbar.show({
+          text: 'Submit Successfully',
+          duration: Snackbar.LENGTH_SHORT,
+          textColor: '#ffffff',
+          backgroundColor: 'green',
+        });
+        setBillName('');
+        setBillDate('');
+        setBillAmount('');
+        setBillType('');
+        setImageUri(null);
+        setSelectedImage(null);
+        navigation.navigate('VehicleMaintenanceScreen')
+        setLoading(false)
+      } else {
+        console.log('else block in api');
+        Snackbar.show({
+          text: 'Something Went Wrong',
+          duration: Snackbar.LENGTH_SHORT,
+          textColor: 'green',
+          backgroundColor: '#F2A6A6',
+        });
+        setLoading(false);
+      }
+    } catch (error) {
+      console.log('errorrrr in add maintaince', error);
+
+      Snackbar.show({
+        text: 'Something Went Wrong',
+        duration: Snackbar.LENGTH_SHORT,
+        textColor: '#AE1717',
+        backgroundColor: '#F2A6A6',
+      });
+      setLoading(false)
+    }
+  }
 
   const requestCameraPermission = async () => {
     if (Platform.OS === 'android') {
@@ -93,10 +187,10 @@ const AddMaintenanceScreen: FC<Props> = ({navigation}) => {
         console.log('User cancelled');
         setImageUri(null);
       } else if (response.error) {
-        console.log('ImagePicker Error:', response.error);
+        console.log('ImagePicker Error:', response?.error);
         setImageUri(null);
       } else {
-        const source = response.assets[0].uri;
+        const source = response?.assets[0].uri;
         const newUris = [...imageUris, source];
         setImageUri(source);
         setImageUris(newUris);
@@ -138,24 +232,14 @@ const AddMaintenanceScreen: FC<Props> = ({navigation}) => {
     });
   };
 
-  // // PHOTO UPLOAD USESTATE ENDED----------------------------------------------------------------
 
-  // MODAL USESTATE----------------------------------------------------------------
-
-  const [isModalVisible, setModalVisible] = useState(false);
 
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
   };
 
-  useEffect(() => {
-    console.log('Image URI:', imageUri);
-  }, [imageUri]);
-
-  // MODAL USESTATE ENDED----------------------------------------------------------------
-
   return (
-    <View style={{height: '100%'}}>
+    <View style={{ height: '100%' }}>
       <View style={styles.upperView}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <IonIcon
@@ -165,45 +249,45 @@ const AddMaintenanceScreen: FC<Props> = ({navigation}) => {
             style={styles.icon}
           />
         </TouchableOpacity>
-        <Text style={{color: 'white', fontSize: width * 0.055}}>
-          Vehicle Maintenance
+        <Text style={{ color: 'white', fontSize: width * 0.055 }}>
+          Add Maintenance
         </Text>
         <TouchableOpacity
-            onPress={() =>
-              navigation.dispatch(
-                CommonActions.navigate({
-                  name: 'NotificationScreen',
-                  params: {
-                    notificationData: notificationCount,
-                  },
-                }),
-              )
-            }>
-            <View style={{flexDirection: 'row'}}>
-              <View style={styles.iconDiv}>
+          onPress={() =>
+            navigation.dispatch(
+              CommonActions.navigate({
+                name: 'NotificationScreen',
+                params: {
+                  notificationData: notificationCount,
+                },
+              }),
+            )
+          }>
+          <View style={{ flexDirection: 'row' }}>
+            <View style={styles.iconDiv}>
               <IonIcon
-            name="notifications"
-            color={'white'}
-            size={width * 0.055}
-            style={styles.icon}
-          />
-                {notificationCount ? (
-                  <Badge
-                    style={{
-                      marginVertical: -27,
-                      marginRight: 20,
-                      width: 20,
-                      height: 20,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}>
-                    {notificationCount}
-                  </Badge>
-                ) : null}
-              </View>
+                name="notifications"
+                color={'white'}
+                size={width * 0.055}
+                style={styles.icon}
+              />
+              {notificationCount ? (
+                <Badge
+                  style={{
+                    marginVertical: -27,
+                    marginRight: 20,
+                    width: 20,
+                    height: 20,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                  {notificationCount}
+                </Badge>
+              ) : null}
             </View>
-          </TouchableOpacity>
-       
+          </View>
+        </TouchableOpacity>
+
       </View>
       <ScrollView>
         <View style={styles.btnView}>
@@ -225,29 +309,29 @@ const AddMaintenanceScreen: FC<Props> = ({navigation}) => {
           </View>
           <View style={styles.vehicleDetailView}>
             <View style={styles.vehicleDetailInnerViewTwo}>
-              <Text style={styles.vehicleDetailsText}>Model No : </Text>
+              <Text style={styles.vehicleDetailsText}>Enigne No : </Text>
             </View>
             <View style={styles.detailDiv}>
-              <Text style={{color: 'black', fontSize: width * 0.04}}>2020</Text>
+              <Text style={{ color: 'black', fontSize: width * 0.045, }}>{vehicleDetail?.v_engine_no}</Text>
             </View>
           </View>
           <View style={styles.vehicleDetailView}>
             <View style={styles.vehicleDetailInnerViewTwo}>
-              <Text style={styles.vehicleDetailsText}>ID : </Text>
+              <Text style={styles.vehicleDetailsText}>Chassis No : </Text>
             </View>
             <View style={styles.detailDiv}>
-              <Text style={{color: 'black', fontSize: width * 0.04}}>
-                HM234701VR
+              <Text style={{ color: 'black', fontSize: width * 0.04 }}>
+                {vehicleDetail?.v_chassis_no}
               </Text>
             </View>
           </View>
-          <View style={[styles.vehicleDetailView, {paddingBottom: 10}]}>
+          <View style={[styles.vehicleDetailView, { paddingBottom: 10 }]}>
             <View style={styles.vehicleDetailInnerViewTwo}>
-              <Text style={styles.vehicleDetailsText}>RC : </Text>
+              <Text style={styles.vehicleDetailsText}>Registration No : </Text>
             </View>
             <View style={styles.detailDiv}>
-              <Text style={{color: 'black', fontSize: width * 0.04}}>
-                REH10345#GH233
+              <Text style={{ color: 'black', fontSize: width * 0.04 }}>
+                {vehicleDetail?.v_registration_no}
               </Text>
             </View>
           </View>
@@ -256,19 +340,28 @@ const AddMaintenanceScreen: FC<Props> = ({navigation}) => {
         <View style={styles.billDetail}>
           <View style={styles.billDetailInner}>
             <Text style={styles.billHead}>Bill Name : </Text>
-            <Text style={styles.billText}>Truck Roof Services</Text>
+            <TextInput placeholder='Enter Bill Name ' value={billName} onChangeText={(text) => setBillName(text)} style={{ color: '#000000', fontSize: 16, fontWeight: '400', width: '60%' }} />
+
           </View>
           <View style={styles.billDetailInner}>
             <Text style={styles.billHead}>Bill Date : </Text>
-            <Text style={styles.billText}>12/09/2022</Text>
+            <TextInputMask
+              placeholder='DD--MM-YYYY'
+              value={billDate}
+              onChangeText={(formatted, extracted) => setBillDate(extracted)}
+              mask={'[00]-[00]-[0000]'}
+              keyboardType="numeric"
+              keyboardType='decimal-pad'
+              style={{ color: '#000000', fontSize: 16, fontWeight: '400', width: '60%' }}
+            />
           </View>
           <View style={styles.billDetailInner}>
             <Text style={styles.billHead}>Bill Amount : </Text>
-            <Text style={styles.billText}>$ 300</Text>
+            <TextInput placeholder='Enter Bill Amount' value={billAmount} onChangeText={(text) => setBillAmount(text)} keyboardType='decimal-pad' style={{ color: '#000000', fontSize: 16, fontWeight: '400', width: '60%' }} />
           </View>
           <View style={styles.billDetailInner}>
             <Text style={styles.billHead}>Bill Type : </Text>
-            <Text style={styles.billText}>Vehicle Maintenance</Text>
+            <TextInput placeholder='Enter Bill Type' value={billType} onChangeText={(text) => setBillType(text)} style={{ color: '#000000', fontSize: 16, fontWeight: '400', width: '60%' }} />
           </View>
         </View>
         <View>
@@ -283,25 +376,23 @@ const AddMaintenanceScreen: FC<Props> = ({navigation}) => {
         </View>
 
         {selectedImage ? (
-          <View style={{alignSelf: 'center'}}>
-            <Image source={{uri: selectedImage}} style={styles.profileImage} />
+          <View style={{ alignSelf: 'center' }}>
+            <Image source={{ uri: selectedImage }} style={styles.profileImage} />
           </View>
         ) : (
-          <View style={{alignSelf: 'center', marginTop: 10}}>
-            <Text style={{color:"black"}}>No Image is selected</Text>
+          <View style={{ alignSelf: 'center', marginTop: 10 }}>
+            <Text style={{ color: "black" }}>No Image is selected</Text>
           </View>
         )}
 
         <View style={styles.buttonsView}>
           <TouchableOpacity
             style={styles.signBtn}
-            onPress={()=>navigation.navigate('VehicleDetailsScreen')}
+            onPress={SubmitData}
           >
             <Text style={styles.signBtnText}>Submit</Text>
           </TouchableOpacity>
         </View>
-
-        {/* MODAL VIEW--------------------------------------------------------- */}
 
         <Modal isVisible={isModalVisible}>
           <View style={styles.popUp}>
@@ -342,8 +433,6 @@ const AddMaintenanceScreen: FC<Props> = ({navigation}) => {
             </View>
           </View>
         </Modal>
-
-        {/* MODAL VIEW ENDED--------------------------------------------------------- */}
       </ScrollView>
     </View>
   );
@@ -372,7 +461,7 @@ const styles = StyleSheet.create({
     paddingLeft: '5%',
     marginTop: 10,
     paddingTop: 10,
-    shadowOffset: {width: 2, height: 2},
+    shadowOffset: { width: 2, height: 2 },
     shadowOpacity: 1,
     shadowRadius: 4,
     elevation: 10,
@@ -380,6 +469,7 @@ const styles = StyleSheet.create({
   vehicleDetailView: {
     display: 'flex',
     flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 5,
   },
   vehicleDetailInnerViewOne: {
@@ -452,7 +542,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     alignSelf: 'center',
     shadowColor: colors.black,
-    shadowOffset: {width: 2, height: 2},
+    shadowOffset: { width: 2, height: 2 },
     shadowOpacity: 1,
     shadowRadius: 5,
     elevation: 4,
@@ -471,7 +561,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 15,
     shadowColor: colors.black,
-    shadowOffset: {width: 2, height: 2},
+    shadowOffset: { width: 2, height: 2 },
     shadowOpacity: 1,
     shadowRadius: 4,
     elevation: 4,

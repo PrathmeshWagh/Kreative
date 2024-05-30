@@ -111,7 +111,7 @@ const VehicleDetailsScreen: FC<Props> = ({navigation,route}) => {
               </View>
 
               <View style={styles.box1}>
-                <Text style={styles.brand}>Engine</Text>
+                <Text style={styles.brand}>Engine  No</Text>
                 <Text style={styles.detail}>{item.v_engine_no}</Text>
               </View>
 

@@ -70,12 +70,11 @@ const LoginScreen: FC<Props> = ({navigation}: any) => {
       const response: any = await postMethod('Login/login', raw);
       console.log(response,raw, 'api');
       if (response.data.status === true) {
+        console.log('response.data aaaa',response.data);
+        
         await storeData(response.data);
-        navigation.dispatch(
-          CommonActions.navigate({
-            name: 'TabNavigation',
-           
-          }),
+        navigation.replace(
+          'TabNavigation'
         );
         Snackbar.show({
           text: response.data.message,

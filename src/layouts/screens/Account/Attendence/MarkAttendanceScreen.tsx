@@ -1,42 +1,28 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable react-native/no-inline-styles */
-/* eslint-disable prettier/prettier */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable prettier/prettier */
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
-import {FC} from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
+  View,
+  Text,
   Pressable,
   StyleSheet,
-  Text,
-  View,
   PermissionsAndroid,
-  Alert,
-  Linking,
   Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import colors from '../../../style/colors';
 import {
-  responsiveFontSize,
   responsiveHeight,
   responsiveWidth,
 } from 'react-native-responsive-dimensions';
-import {ActivityIndicator} from 'react-native-paper';
-import {useFocusEffect} from '@react-navigation/native';
-import {CommonActions} from '@react-navigation/native';
-import {getStorageData, postMethod} from '../../../../utils/helper';
+import { ActivityIndicator } from 'react-native-paper';
+import { useFocusEffect } from '@react-navigation/native';
 import Snackbar from 'react-native-snackbar';
 import Appbar from '../../../component/Appbar';
-// import Geolocation from 'react-native-geolocation-service';
-import Geolocation from '@react-native-community/geolocation';
+import Geolocation from 'react-native-geolocation-service';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {err} from 'react-native-svg';
-import {set} from 'react-hook-form';
-interface Props {
-  navigation: any;
-}
-const MarkAttendance: FC<Props> = ({navigation}): JSX.Element => {
+import ProminentDisclosure from '../../../component/ProminentDisclosure ';
+import colors from '../../../style/colors';
+import { getStorageData, postMethod } from '../../../../utils/helper';
+
+const MarkAttendance = ({ navigation }) => {
   const [punchData, setPunchData] = useState([]);
   const [punchOut, setPunchOut] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -44,27 +30,27 @@ const MarkAttendance: FC<Props> = ({navigation}): JSX.Element => {
   const [punched, setPunched] = useState(false);
   const [address, setAddress] = useState(null);
   const [message, setMessage] = useState(null);
-  const [region, setRegion] = useState({
-    latitude: 0,
-    longitude: 0,
-    latitudeDelta: 0.0922,
-    longitudeDelta: 0.0421,
-  });
+  const [region, setRegion] = useState('0');
+  const [showDisclosure, setShowDisclosure] = useState(false); // Updated state
 
   useFocusEffect(
     useCallback(() => {
-      if (Platform.OS === 'android') {
-        requestLocationPermission();
-      } else {
-        getLocation();
-      }
+      checkLocationPermissionAccepted();
       setTimeout(() => {
         updateDataIfNotNull();
       }, 1000);
     }, [address]),
   );
 
-  // Request location permission
+  const checkLocationPermissionAccepted = async () => {
+    const accepted = await AsyncStorage.getItem('locationPermissionAccepted');
+    if (!accepted) {
+      setShowDisclosure(true);
+    } else {
+      requestLocationPermission();
+    }
+  };
+
   const requestLocationPermission = async () => {
     try {
       const granted = await PermissionsAndroid.request(
@@ -87,35 +73,32 @@ const MarkAttendance: FC<Props> = ({navigation}): JSX.Element => {
 
   const getLocation = () => {
     Geolocation.getCurrentPosition(
-      (position: {coords: any}) => {
-        const {latitude, longitude}: any = position.coords;
-        setRegion({
-          ...region,
-          latitude,
-          longitude,
-          latitudeDelta: 0.0922,
-          longitudeDelta: 0.0421,
-        });
-
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setRegion(position.coords);
         fetch(
           `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=AIzaSyB5D8cCcugZPm2WiQh106c-K1-2dmSEiv0`,
         )
-          .then(response => response.json())
-          .then(data => {
+          .then((response) => response.json())
+          .then((data) => {
             if (data.results && data.results.length > 0) {
               setAddress(data.results[0].formatted_address);
             }
           })
-          .catch(error => {
+          .catch((error) => {
             console.error('Error fetching address:', error);
           });
       },
-      (error: any) => console.error(error),
-      {enableHighAccuracy: true, timeout: 20000, maximumAge: 1000},
+      (error) => console.error(error),
+      { enableHighAccuracy: false }
     );
   };
 
-  // Punch In Function
+  const handleAcceptDisclosure = () => {
+    setShowDisclosure(false);
+    requestLocationPermission();
+  };
+
   const PunchHandle = async () => {
     const storage = await getStorageData();
     const row = {
@@ -125,7 +108,7 @@ const MarkAttendance: FC<Props> = ({navigation}): JSX.Element => {
     };
     try {
       setLoading(true);
-      const response: any = await postMethod('Attendance/punch_in', row);
+      const response = await postMethod('Attendance/punch_in', row);
       if (response.status === 200) {
         setPunchData(response.data.data);
         await AsyncStorage.setItem(
@@ -152,12 +135,10 @@ const MarkAttendance: FC<Props> = ({navigation}): JSX.Element => {
     }
   };
 
-  // Punch out function
   const PunchOutHandle = async () => {
     const storage = await getStorageData();
     const storeTimeId = await AsyncStorage.getItem('time_id');
     const parsedTimeId = JSON.parse(storeTimeId);
-    console.log(parsedTimeId,'454p');
 
     const row = {
       user_id: storage.data[0].id,
@@ -167,14 +148,13 @@ const MarkAttendance: FC<Props> = ({navigation}): JSX.Element => {
     };
     try {
       setLoading(true);
-      const response: any = await postMethod('Attendance/punch_out', row);
+      const response = await postMethod('Attendance/punch_out', row);
       if (response.status === 200) {
         await AsyncStorage.setItem(
           'punchOut',
           JSON.stringify(response.data.data),
         );
         setPunchOut(response.data.data);
-
         setMessage(response.data.message);
         setLoading(false);
         Snackbar.show({
@@ -185,7 +165,6 @@ const MarkAttendance: FC<Props> = ({navigation}): JSX.Element => {
         });
       }
       setPunched(false);
-
       setLoading(false);
     } catch (error) {
       setLoading(false);
@@ -201,19 +180,18 @@ const MarkAttendance: FC<Props> = ({navigation}): JSX.Element => {
       const parsedPunchOut = JSON.parse(storedPunchOut);
       if (parsedPunchIn) {
         setPunchData(parsedPunchIn);
-        setPunched(true)
+        setPunched(true);
       }
-  
       if (parsedPunchOut) {
         setPunchOut(parsedPunchOut);
-        setPunched(false)
-
+        setPunched(false);
       }
     } catch (error) {
       console.error('Error updating data:', error);
     }
   };
-  const formatDate = (dateTimeString: string | number | Date) => {
+
+  const formatDate = (dateTimeString) => {
     if (!dateTimeString) {
       return '';
     }
@@ -224,7 +202,7 @@ const MarkAttendance: FC<Props> = ({navigation}): JSX.Element => {
     return `${day}-${month}-${year}`;
   };
 
-  const formatTime = (dateTimeString: string | number | Date) => {
+  const formatTime = (dateTimeString) => {
     if (!dateTimeString) {
       return '';
     }
@@ -237,76 +215,80 @@ const MarkAttendance: FC<Props> = ({navigation}): JSX.Element => {
 
   return (
     <>
-      <Appbar
-        title={'Mark Attendance'}
-        backgroundColor={colors.white}
-        navigation={navigation}
-      />
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          marginTop: 30,
-          marginBottom: 20,
-          paddingHorizontal: 10,
-        }}
-      />
-      {loading ? (
-        <ActivityIndicator size={20} color={colors.brand_primary} />
-      ) : (
+      {showDisclosure && (
+        <ProminentDisclosure onAccept={handleAcceptDisclosure} />
+      )}
+      {!showDisclosure && (
         <>
-          <View style={styles.columnBox}>
-            <View style={styles.locationColumn}>
-              <Icon name="map-marker" size={50} color="red" />
-              <Text style={styles.location}>Live Location</Text>
-            </View>
-            <Text style={styles.textItem}>{address}</Text>
-            <View style={styles.row}>
-              {punched ? (
-                <>
-                  <Text style={styles.colText0}>
-                    {formatDate(punchData.clock_in)}
-                  </Text>
-                  <Text style={styles.colText0}>
-                    {formatTime(punchData.clock_in)}
-                  </Text>
-                </>
-              ) : (
-                <>
-                  <Text style={styles.colText0}>
-                    {formatDate(punchOut.clock_out)}
-                  </Text>
-                  <Text style={styles.colText0}>
-                    {formatTime(punchOut.clock_out)}
-                  </Text>
-                </>
-              )}
-            </View>
-            {punched ? (
-              <View style={styles.Circle0}>
-                <View style={styles.Circle}>
-                  <Pressable
-                    style={styles.punch0}
-                    onPress={() => PunchOutHandle()}>
-                    <Icon name="hand-paper-o" size={20} color="white" />
-                    <Text style={styles.colText1}>Punch Out</Text>
-                  </Pressable>
+          <Appbar
+            title={'Mark Attendance'}
+            navigation={navigation}
+            back={true}
+          />
+          {loading ? (
+            <ActivityIndicator size={20} color={colors.brand_primary} />
+          ) : (
+            <>
+              <View style={styles.columnBox}>
+                <View style={styles.locationColumn}>
+                  <Icon name="map-marker" size={50} color="red" />
+                  <Text style={styles.location}>Live Location</Text>
                 </View>
-              </View>
-            ) : (
-              <View style={styles.Circle0}>
-                <View style={styles.Circle}>
-                  <Pressable style={styles.punch} onPress={() => PunchHandle()}>
-                    <Icon name="hand-paper-o" size={20} color="white" />
-                    <Text style={styles.colText1}>Punch In</Text>
-                  </Pressable>
+                <Text style={styles.textItem}>{address}</Text>
+                <View style={styles.row}>
+                  {punched ? (
+                    <>
+                      <Text style={styles.colText0}>
+                        {formatDate(punchData.clock_in)}
+                      </Text>
+                      <Text style={styles.colText0}>
+                        {formatTime(punchData.clock_in)}
+                      </Text>
+                    </>
+                  ) : (
+                    <>
+                      <Text style={styles.colText0}>
+                        {formatDate(punchOut.clock_out)}
+                      </Text>
+                      <Text style={styles.colText0}>
+                        {formatTime(punchOut.clock_out)}
+                      </Text>
+                    </>
+                  )}
                 </View>
+                {punched ? (
+                  <View style={styles.Circle0}>
+                    <View style={styles.Circle}>
+                      <Pressable
+                        style={styles.punch0}
+                        onPress={() => PunchOutHandle()}
+                      >
+                        <Icon name="hand-paper-o" size={20} color="white" />
+                        <Text style={styles.colText1}>Punch Out</Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                ) : (
+                  <View style={styles.Circle0}>
+                    <View style={styles.Circle}>
+                      <Pressable
+                        style={styles.punch}
+                        onPress={() => PunchHandle()}
+                      >
+                        <Icon name="hand-paper-o" size={20} color="white" />
+                        <Text style={styles.colText1}>Punch In</Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                )}
+                <Pressable
+                  onPress={() => navigation.navigate('AttendanceScreen')}
+                >
+                  <Text style={styles.colText0}>Attendance Details</Text>
+                </Pressable>
               </View>
-            )}
-            <Pressable onPress={() => navigation.navigate('AttendanceScreen')}>
-              <Text style={styles.colText0}>Attendance Details</Text>
-            </Pressable>
-          </View>
+            </>
+          )}
         </>
       )}
     </>
@@ -337,7 +319,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 15,
   },
-
   colText: {
     color: 'black',
     fontFamily: 'Roboto-Light',
@@ -361,7 +342,6 @@ const styles = StyleSheet.create({
     fontSize: 22,
     marginBottom: 5,
   },
-
   button0: {
     width: 130,
     height: 35,

@@ -7,16 +7,72 @@ import {
   Image,
   Dimensions,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
-import React, {FC} from 'react';
+import React, { FC, useCallback, useEffect, useState } from 'react';
 import IonIcon from 'react-native-vector-icons/Ionicons';
 import colors from '../../style/colors';
+import axios from 'axios';
+import { useFocusEffect } from '@react-navigation/native';
+import { FlatList } from 'react-native';
+import { getMethod } from '../../../utils/helper';
 
-const {width, height} = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 interface Props {
   navigation: any;
 }
-const VehicleMaintenanceScreen: FC<Props> = ({navigation}) => {
+const VehicleMaintenanceScreen: FC<Props> = ({ navigation }) => {
+  const [loading, setLoading] = useState(false)
+  const [vehicleMaintainceData, setvehicleMaintainceData] = useState([])
+
+  useFocusEffect(
+    useCallback(() => {
+      getData()
+    }, [])
+
+  )
+
+  const getData = async () => {
+    try {
+      setLoading(true)
+      // const response: any = await axios.get(`https://kreative.braincave.work/hrms/api/VMS/maintenance_list`, {
+      //   headers: {
+      //     Authorization: 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoiMSIsInVzZXJuYW1lIjoic3VwZXJhZG1pbiIsImVtYWlsIjoic3VwZXJhZG1pbkBnbWFpbC5jb20ifQ.JDP5tig6VGI-fE_dHH4sWRINSIn0QznPHE4rfrtJbeo',
+      //     Accept: 'application/json',
+      //   },
+      // })
+
+      const response: any = await getMethod(`VMS/maintenance_list`)
+      if (response.status === 200) {
+        // console.log('resp', response?.data.Data);
+        setvehicleMaintainceData(response?.data.Data)
+        setLoading(false)
+      } else {
+        setLoading(false)
+        console.log('error in maintenance_list api', response.data);
+      }
+    } catch (error) {
+      setLoading(false)
+      console.log('error in maintenance_list api', error);
+
+    }
+  }
+
+  const renderVehicleData = ({ item, index }) => {
+    return (
+      <View style={styles.maintenance}>
+        <View>
+          <Text style={styles.vehicleModal}>{item.ie_description}</Text>
+          <Text style={styles.vehicleService}>{item.ie_type}</Text>
+        </View>
+        <View>
+          <Text style={styles.serviceDate}>{item.ie_date}</Text>
+          <Text style={styles.serviceCharge}>{item.ie_amount}</Text>
+        </View>
+      </View>
+    )
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.upperView}>
@@ -28,97 +84,41 @@ const VehicleMaintenanceScreen: FC<Props> = ({navigation}) => {
             style={styles.icon}
           />
         </TouchableOpacity>
-        <Text style={{color: 'white', fontSize: width * 0.055}}>
+        <Text style={{ color: 'white', fontSize: width * 0.055 }}>
           Vehicle Maintenance
         </Text>
         <Text> </Text>
       </View>
+
       <View style={styles.btnView}>
-        <TouchableOpacity
-          style={styles.signBtn}
-          onPress={() => navigation.navigate('AddMaintenanceScreen')}>
-          <Text style={styles.signBtnText}>Add Maintenance +</Text>
+        <TouchableOpacity style={styles.signBtn} onPress={() => navigation.navigate('AddMaintenanceScreen')}>
+          <Text style={styles.signBtnText}>+  Add Maintenance</Text>
         </TouchableOpacity>
       </View>
-      <ScrollView>
-        <View style={{backgroundColor: '#F4F4F4', paddingBottom: 20}}>
+
+      {loading ?
+        <ActivityIndicator size={30} color={'blue'} />
+        :
+        <View style={{ backgroundColor: '#F4F4F4', flex: 1, marginBottom: 50 }}>
           <View style={styles.lastMaintenanceHead}>
             <Text style={styles.lastMaintenanceText}>Last Maintenance</Text>
           </View>
-          <View>
-            <View style={styles.maintenance}>
-              <View>
-                <Text style={styles.vehicleModal}>Small Cargo Truck</Text>
-                <Text style={styles.vehicleService}>Full Body Painting</Text>
-              </View>
-              <View>
-                <Text style={styles.serviceDate}>Dec 08/01/2022</Text>
-                <Text style={styles.serviceCharge}>$500</Text>
-              </View>
-            </View>
-            <View style={styles.maintenance}>
-              <View>
-                <Text style={styles.vehicleModal}>Small Cargo Truck</Text>
-                <Text style={styles.vehicleService}>Water wash</Text>
-              </View>
-              <View>
-                <Text style={styles.serviceDate}>Dec 12/09/2021</Text>
-                <Text style={styles.serviceCharge}>$100</Text>
-              </View>
-            </View>
-            <View style={styles.maintenance}>
-              <View>
-                <Text style={styles.vehicleModal}>Small Cargo Truck</Text>
-                <Text style={styles.vehicleService}>Complete truck spa</Text>
-              </View>
-              <View>
-                <Text style={styles.serviceDate}>Dec 12/05/2021</Text>
-                <Text style={styles.serviceCharge}>$660</Text>
-              </View>
-            </View>
-            <View style={styles.maintenance}>
-              <View>
-                <Text style={styles.vehicleModal}>Small Cargo Truck</Text>
-                <Text style={styles.vehicleService}>General services</Text>
-              </View>
-              <View>
-                <Text style={styles.serviceDate}>Dec 12/01/2021</Text>
-                <Text style={styles.serviceCharge}>$660</Text>
-              </View>
-            </View>
-            <View style={styles.maintenance}>
-              <View>
-                <Text style={styles.vehicleModal}>Small Cargo Truck</Text>
-                <Text style={styles.vehicleService}>General services</Text>
-              </View>
-              <View>
-                <Text style={styles.serviceDate}>Dec 12/01/2021</Text>
-                <Text style={styles.serviceCharge}>$660</Text>
-              </View>
-            </View>
-            <View style={styles.maintenance}>
-              <View>
-                <Text style={styles.vehicleModal}>Small Cargo Truck</Text>
-                <Text style={styles.vehicleService}>General services</Text>
-              </View>
-              <View>
-                <Text style={styles.serviceDate}>Dec 12/01/2021</Text>
-                <Text style={styles.serviceCharge}> $660</Text>
-              </View>
-            </View>
-            <View style={styles.maintenance}>
-              <View>
-                <Text style={styles.vehicleModal}>Big Cargo Truck</Text>
-                <Text style={styles.vehicleService}>General services</Text>
-              </View>
-              <View>
-                <Text style={styles.serviceDate}>Dec 12/01/2021</Text>
-                <Text style={styles.serviceCharge}> $660</Text>
-              </View>
-            </View>
-          </View>
+          <FlatList
+            data={vehicleMaintainceData}
+            keyExtractor={(item, index) => item.ie_id}
+            renderItem={renderVehicleData}
+            ListEmptyComponent={() => {
+              return (
+                <View style={{ flex: 1, }}>
+                  <Text style={{ textAlign: 'center', marginTop: height / 5, fontSize: 20, fontWeight: '600', color: '#000000' }}>Vehicle Maintenance Data Not Found</Text>
+                </View>
+              )
+            }}
+          />
+
         </View>
-      </ScrollView>
+      }
+
     </View>
   );
 };
@@ -128,6 +128,7 @@ export default VehicleMaintenanceScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#ffffff'
   },
   upperView: {
     backgroundColor: colors.brand_primary,
@@ -140,27 +141,6 @@ const styles = StyleSheet.create({
   icon: {
     alignSelf: 'flex-start',
   },
-  addMaintananceBtn: {
-    // backgroundColor: '',
-    // backgroundColor: colors.bg_add,
-  },
-  signBtn: {
-    backgroundColor: colors.bg_btn,
-    paddingHorizontal: 25,
-    paddingVertical: 10,
-    borderRadius: 6,
-    shadowColor: 'black',
-    shadowOffset: {width: 2, height: 2},
-    shadowOpacity: 1,
-    shadowRadius: 4,
-    // elevation: 4,
-    alignSelf: 'center',
-  },
-  signBtnText: {
-    color: '#4F4D4D',
-    fontSize: width * 0.045,
-    fontWeight: '700',
-  },
   btnView: {
     backgroundColor: 'white',
     height: height * 0.2,
@@ -168,41 +148,68 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  signBtn: {
+    backgroundColor: '#EBE206',
+    paddingHorizontal: 25,
+    paddingVertical: 10,
+    borderRadius: 6,
+    shadowColor: 'black',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 4,
+    elevation: 4,
+    alignSelf: 'center',
+
+  },
+  signBtnText: {
+    color: '#4F4D4D',
+    fontSize: width * 0.045,
+    fontWeight: '700',
+  },
+
   lastMaintenanceHead: {
     paddingHorizontal: 10,
     paddingVertical: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#BAB7B7',
+    borderBottomColor: "#BAB7B7",
   },
   lastMaintenanceText: {
     color: 'black',
-    marginTop: 15,
+    fontSize: 22,
+    fontWeight: '500'
+
   },
   maintenance: {
-    display: 'flex',
+    flex: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
     padding: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#BAB7B7',
+    borderBottomColor: "#BAB7B7",
+
   },
+
   vehicleModal: {
     fontSize: width * 0.03,
     color: '#9A9191',
+
   },
   serviceDate: {
     color: 'black',
     fontSize: width * 0.035,
     fontWeight: '600',
+
   },
   vehicleService: {
     color: 'black',
     fontSize: width * 0.035,
+
   },
   serviceCharge: {
     color: '#11AF18',
     fontSize: width * 0.03,
     alignSelf: 'center',
     fontWeight: '700',
-  },
+  }
+
 });
