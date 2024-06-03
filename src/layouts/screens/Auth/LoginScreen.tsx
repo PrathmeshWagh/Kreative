@@ -1,8 +1,3 @@
-/* eslint-disable no-trailing-spaces */
-/* eslint-disable prettier/prettier */
-/* eslint-disable @typescript-eslint/no-shadow */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
 import React, {FC, useState} from 'react';
 import {
   ImageBackground,
@@ -32,7 +27,7 @@ interface Props {
 
 const LoginScreen: FC<Props> = ({navigation}: any) => {
   const [loading, setLoading] = useState(false);
-  // use React Hook Form
+  
   const {
     control,
     handleSubmit,
@@ -70,11 +65,10 @@ const LoginScreen: FC<Props> = ({navigation}: any) => {
       const response: any = await postMethod('Login/login', raw);
       console.log(response,raw, 'api');
       if (response.data.status === true) {
-        console.log('response.data aaaa',response.data);
-        
+        // console.log('response.data aaaa',response.data);
         await storeData(response.data);
         navigation.replace(
-          'TabNavigation'
+          'ProminentDisclosure'
         );
         Snackbar.show({
           text: response.data.message,

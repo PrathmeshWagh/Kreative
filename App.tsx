@@ -17,7 +17,7 @@ export default function App() {
   useEffect(() => {
     setTimeout(() => {
       SplashScreen.hide();
-    },);
+    },3000);
   })
 
   OneSignal.Debug.setLogLevel(LogLevel.Verbose);

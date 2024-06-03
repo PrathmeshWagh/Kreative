@@ -18,7 +18,6 @@ import Snackbar from 'react-native-snackbar';
 import Appbar from '../../../component/Appbar';
 import Geolocation from 'react-native-geolocation-service';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import ProminentDisclosure from '../../../component/ProminentDisclosure ';
 import colors from '../../../style/colors';
 import { getStorageData, postMethod } from '../../../../utils/helper';
 
@@ -31,25 +30,17 @@ const MarkAttendance = ({ navigation }) => {
   const [address, setAddress] = useState(null);
   const [message, setMessage] = useState(null);
   const [region, setRegion] = useState('0');
-  const [showDisclosure, setShowDisclosure] = useState(false); // Updated state
+
 
   useFocusEffect(
     useCallback(() => {
-      checkLocationPermissionAccepted();
+      requestLocationPermission();
       setTimeout(() => {
         updateDataIfNotNull();
       }, 1000);
     }, [address]),
   );
 
-  const checkLocationPermissionAccepted = async () => {
-    const accepted = await AsyncStorage.getItem('locationPermissionAccepted');
-    if (!accepted) {
-      setShowDisclosure(true);
-    } else {
-      requestLocationPermission();
-    }
-  };
 
   const requestLocationPermission = async () => {
     try {
@@ -94,10 +85,6 @@ const MarkAttendance = ({ navigation }) => {
     );
   };
 
-  const handleAcceptDisclosure = () => {
-    setShowDisclosure(false);
-    requestLocationPermission();
-  };
 
   const PunchHandle = async () => {
     const storage = await getStorageData();
@@ -215,83 +202,77 @@ const MarkAttendance = ({ navigation }) => {
 
   return (
     <>
-      {showDisclosure && (
-        <ProminentDisclosure onAccept={handleAcceptDisclosure} />
-      )}
-      {!showDisclosure && (
+      <Appbar
+        title={'Mark Attendance'}
+        navigation={navigation}
+        back={true}
+      />
+      {loading ? (
+        <ActivityIndicator size={20} color={colors.brand_primary} />
+      ) : (
         <>
-          <Appbar
-            title={'Mark Attendance'}
-            navigation={navigation}
-            back={true}
-          />
-          {loading ? (
-            <ActivityIndicator size={20} color={colors.brand_primary} />
-          ) : (
-            <>
-              <View style={styles.columnBox}>
-                <View style={styles.locationColumn}>
-                  <Icon name="map-marker" size={50} color="red" />
-                  <Text style={styles.location}>Live Location</Text>
+          <View style={styles.columnBox}>
+            <View style={styles.locationColumn}>
+              <Icon name="map-marker" size={50} color="red" />
+              <Text style={styles.location}>Live Location</Text>
+            </View>
+            <Text style={styles.textItem}>{address}</Text>
+            <View style={styles.row}>
+              {punched ? (
+                <>
+                  <Text style={styles.colText0}>
+                    {formatDate(punchData.clock_in)}
+                  </Text>
+                  <Text style={styles.colText0}>
+                    {formatTime(punchData.clock_in)}
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.colText0}>
+                    {formatDate(punchOut.clock_out)}
+                  </Text>
+                  <Text style={styles.colText0}>
+                    {formatTime(punchOut.clock_out)}
+                  </Text>
+                </>
+              )}
+            </View>
+            {punched ? (
+              <View style={styles.Circle0}>
+                <View style={styles.Circle}>
+                  <Pressable
+                    style={styles.punch0}
+                    onPress={() => PunchOutHandle()}
+                  >
+                    <Icon name="hand-paper-o" size={20} color="white" />
+                    <Text style={styles.colText1}>Punch Out</Text>
+                  </Pressable>
                 </View>
-                <Text style={styles.textItem}>{address}</Text>
-                <View style={styles.row}>
-                  {punched ? (
-                    <>
-                      <Text style={styles.colText0}>
-                        {formatDate(punchData.clock_in)}
-                      </Text>
-                      <Text style={styles.colText0}>
-                        {formatTime(punchData.clock_in)}
-                      </Text>
-                    </>
-                  ) : (
-                    <>
-                      <Text style={styles.colText0}>
-                        {formatDate(punchOut.clock_out)}
-                      </Text>
-                      <Text style={styles.colText0}>
-                        {formatTime(punchOut.clock_out)}
-                      </Text>
-                    </>
-                  )}
-                </View>
-                {punched ? (
-                  <View style={styles.Circle0}>
-                    <View style={styles.Circle}>
-                      <Pressable
-                        style={styles.punch0}
-                        onPress={() => PunchOutHandle()}
-                      >
-                        <Icon name="hand-paper-o" size={20} color="white" />
-                        <Text style={styles.colText1}>Punch Out</Text>
-                      </Pressable>
-                    </View>
-                  </View>
-                ) : (
-                  <View style={styles.Circle0}>
-                    <View style={styles.Circle}>
-                      <Pressable
-                        style={styles.punch}
-                        onPress={() => PunchHandle()}
-                      >
-                        <Icon name="hand-paper-o" size={20} color="white" />
-                        <Text style={styles.colText1}>Punch In</Text>
-                      </Pressable>
-                    </View>
-                  </View>
-                )}
-                <Pressable
-                  onPress={() => navigation.navigate('AttendanceScreen')}
-                >
-                  <Text style={styles.colText0}>Attendance Details</Text>
-                </Pressable>
               </View>
-            </>
-          )}
+            ) : (
+              <View style={styles.Circle0}>
+                <View style={styles.Circle}>
+                  <Pressable
+                    style={styles.punch}
+                    onPress={() => PunchHandle()}
+                  >
+                    <Icon name="hand-paper-o" size={20} color="white" />
+                    <Text style={styles.colText1}>Punch In</Text>
+                  </Pressable>
+                </View>
+              </View>
+            )}
+            <Pressable
+              onPress={() => navigation.navigate('AttendanceScreen')}
+            >
+              <Text style={styles.colText0}>Attendance Details</Text>
+            </Pressable>
+          </View>
         </>
       )}
     </>
+
   );
 };
 

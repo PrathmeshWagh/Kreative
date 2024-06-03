@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable prettier/prettier */
 import React, { useEffect, useState } from 'react';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import EditProfile from '../screens/Account/Profile/EditProfileScreen';
 import Page1 from '../screens/Auth/Page1';
 import Page2 from '../screens/Auth/Page2';
@@ -43,21 +43,37 @@ import { Colors } from 'react-native/Libraries/NewAppScreen';
 import { getStorageData } from '../../utils/helper';
 import TimesheetNavigation from './TimesheetNavigation';
 import OdometerHistory from '../screens/Management/OdometerHistory';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import ProminentDisclosure from '../component/ProminentDisclosure ';
 
 const Stack = createNativeStackNavigator();
 
 const AppNavigation = () => {
   const [auth, setAuth] = useState('');
+  const [initialRoute, setInitialRoute] = useState(null);
+
+
   const [load, setLoad] = useState(true);
   useEffect(() => {
     getUserData();
   }, []);
+
+
   const getUserData = async () => {
     try {
+      const userAccepted = await AsyncStorage.getItem('permissionsAccepted');
+      // console.log('userAccepted',userAccepted);
       const getData = await getStorageData();
+
       if (getData) {
-        setAuth(getData.access_token);
-        console.log(auth,'auth');
+        setAuth(getData?.token);
+      }
+      if (userAccepted == 'true' && getData?.token) {
+        // console.log('userAccepted',);
+        
+        setInitialRoute('TabNavigation');
+      } else {
+        setInitialRoute('ProminentDisclosure');
       }
       setLoad(false);
     } catch (error) {
@@ -77,6 +93,7 @@ const AppNavigation = () => {
       {/* Home Screen ============================= */}
       <Stack.Screen name="HomeScreen" component={HomeScreen} />
 
+      <Stack.Screen name='ProminentDisclosure' component={ProminentDisclosure} />
       {/* Project ============================= */}
       <Stack.Screen name="ProjectScreen" component={ProjectScreen} />
       <Stack.Screen name="ProjectTaskScreen" component={ProjectTaskScreen} />
@@ -169,7 +186,7 @@ const AppNavigation = () => {
 
       <Stack.Screen name='OdometerHistory' component={OdometerHistory} />
     </Stack.Navigator>
-      ) : (
+  ) : (
     <View>
       <ActivityIndicator size={20} color={Colors.brand_primary} />
     </View>

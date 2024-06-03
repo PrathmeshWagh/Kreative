@@ -22,6 +22,7 @@ import { getMethod,getStorageData,postMethod, } from '../../../../utils/helper';
 import {useFocusEffect} from '@react-navigation/native';
 import { useInfoContext } from '../../../navigation/TabNavigation/TabNavigation';
 import { Item } from 'react-native-paper/lib/typescript/components/Drawer/Drawer';
+import ProminentDisclosure from '../../../component/ProminentDisclosure ';
 
 const {width} = Dimensions.get('window');
 interface Props {
@@ -34,6 +35,7 @@ const HomeScreen: FC<Props> = ({navigation, route}: any) => {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState([]);
   const [storageD, setStorageD] = useState([]);
+
   useFocusEffect(
     useCallback(() => {
       HomeFuntion();
@@ -41,7 +43,6 @@ const HomeScreen: FC<Props> = ({navigation, route}: any) => {
     }, []),
   );
 
-  // HomeFunction
   const HomeFuntion = async () => {
     const storage = await getStorageData();
     const row = {
