@@ -21,7 +21,7 @@ export default function App() {
   })
 
   OneSignal.Debug.setLogLevel(LogLevel.Verbose);
-  OneSignal.initialize('66208921-9dd0-413c-9952-03b03c5c6cd5');
+  OneSignal.initialize('2e601f79-8f3d-4c6d-b25d-71843ea00807');
   OneSignal.Notifications.requestPermission(true);
 
   return (
